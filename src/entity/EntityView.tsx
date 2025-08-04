@@ -1,8 +1,21 @@
-import { Chip, Divider, Drawer, Input, styled } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Button,
+  Chip,
+  Divider,
+  Drawer,
+  Input,
+  styled,
+  Typography,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { FunctionComponent, useState } from "react";
 import { SavedJson } from "../typings";
 import { EntityItem } from "./EntityItem";
 import { EntityDetail } from "./EntitiyDetail";
+import { StyledDrawer } from "../components/Drawer";
 
 const Layout = styled("div")`
   color: white;
@@ -25,18 +38,6 @@ const FilterToggle = styled(Chip)`
   &:hover {
     background-color: #021073;
     cursor: pointer;
-  }
-`;
-
-const StyledDrawer = styled(Drawer)`
-  width: 800px;
-  flex-shrink: 0;
-  border-left: 1px solid #fff4b7;
-  & .MuiDrawer-paper {
-    width: 400px;
-    box-sizing: border-box;
-    background-color: black;
-    color: white;
   }
 `;
 
@@ -70,12 +71,21 @@ const StyledInput = styled(Input)`
     outline: none;
   }
 `;
+const StyledAccordion = styled(Accordion)`
+  background-color: black;
+  color: white;
+  border: 1px solid #006a67;
+  border-radius: 8px;
+`;
+const StyledExpandMoreIcon = styled(ExpandMoreIcon)`
+  color: white;
+`;
 
-type ContentPageProps = {
+type EntityViewProps = {
   json: SavedJson | null;
 };
 
-export const ContentPage: FunctionComponent<ContentPageProps> = ({ json }) => {
+export const EntityView: FunctionComponent<EntityViewProps> = ({ json }) => {
   const [selectedComponentFilters, setSelectedComponentFilters] = useState<
     Array<string>
   >([]);
@@ -89,6 +99,9 @@ export const ContentPage: FunctionComponent<ContentPageProps> = ({ json }) => {
     string | null
   >(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  const [paginationCount, setPaginationCount] = useState<number>(100);
+
   if (!json) {
     return (
       <Layout>
@@ -97,6 +110,7 @@ export const ContentPage: FunctionComponent<ContentPageProps> = ({ json }) => {
       </Layout>
     );
   }
+
   const { json: e } = json;
 
   const entities = e as Record<string, any>;
@@ -151,25 +165,40 @@ export const ContentPage: FunctionComponent<ContentPageProps> = ({ json }) => {
       <EntityList>
         <div style={{ padding: "10px" }}>
           <div>
-            {getDistinctComponents().map((component) => (
-              <FilterToggle
-                label={component}
-                onClick={() => handleFilterToggle(component)}
-                key={component}
-                style={{
-                  backgroundColor: selectedComponentFilters.includes(component)
-                    ? "#FFF4B7"
-                    : "transparent",
-                  color: selectedComponentFilters.includes(component)
-                    ? "#000"
-                    : "white",
-                }}
-              ></FilterToggle>
-            ))}
-            <FilterToggle
-              label="Clear Filters"
-              onClick={() => setSelectedComponentFilters([])}
-            ></FilterToggle>
+            <StyledAccordion>
+              <AccordionSummary
+                expandIcon={<StyledExpandMoreIcon />}
+                aria-controls="panel1-content"
+                id="panel1-header"
+              >
+                <Typography component="span">
+                  Component filters: {selectedComponentFilters.join(", ")}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {getDistinctComponents().map((component) => (
+                  <FilterToggle
+                    label={component}
+                    onClick={() => handleFilterToggle(component)}
+                    key={component}
+                    style={{
+                      backgroundColor: selectedComponentFilters.includes(
+                        component
+                      )
+                        ? "#FFF4B7"
+                        : "transparent",
+                      color: selectedComponentFilters.includes(component)
+                        ? "#000"
+                        : "white",
+                    }}
+                  ></FilterToggle>
+                ))}
+                <FilterToggle
+                  label="Clear Filters"
+                  onClick={() => setSelectedComponentFilters([])}
+                ></FilterToggle>
+              </AccordionDetails>
+            </StyledAccordion>
             {selectedEntityCommonRefId && (
               <FilterToggle
                 label={`Reset Ref: ${selectedEntityCommonRefId}`}
@@ -210,24 +239,36 @@ export const ContentPage: FunctionComponent<ContentPageProps> = ({ json }) => {
               maxHeight: "85vh",
             }}
           >
-            {filteredEntityIds.map((entityId: string, index: number) => (
-              <>
-                <EntityItem
-                  key={entityId}
-                  entityId={entityId}
-                  entity={entities[entityId]}
-                  onClick={(id) => setSelectedEntitiyId(id)}
-                  index={index}
-                  isSelected={selectedEntityId === entityId}
-                />
-                <Divider
-                  style={{
-                    backgroundColor: "white",
-                    margin: "10px 0",
-                  }}
-                />
-              </>
-            ))}
+            {filteredEntityIds
+              .slice(0, paginationCount)
+              .map((entityId: string, index: number) => (
+                <>
+                  <EntityItem
+                    key={entityId}
+                    entityId={entityId}
+                    entity={entities[entityId]}
+                    onClick={(id) => setSelectedEntitiyId(id)}
+                    index={index}
+                    isSelected={selectedEntityId === entityId}
+                  />
+                  <Divider
+                    style={{
+                      backgroundColor: "white",
+                      margin: "10px 0",
+                    }}
+                  />
+                </>
+              ))}
+            {filteredEntityIds.length > paginationCount && (
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => setPaginationCount(paginationCount + 100)}
+                style={{ marginTop: "10px", width: "100%" }}
+              >
+                Load More
+              </Button>
+            )}
           </div>
         </div>
       </EntityList>

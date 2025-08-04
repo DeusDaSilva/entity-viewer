@@ -19,7 +19,7 @@ export const EntityDetail: FunctionComponent<EntityDetailProps> = ({
     <>
       <JsonView
         data={selectedEntity}
-        shouldExpandNode={(level) => level < 3}
+        shouldExpandNode={(level) => level < 6}
         style={darkStyles}
         clickToExpandNode={true}
       />

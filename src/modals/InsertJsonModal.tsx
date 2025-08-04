@@ -1,5 +1,4 @@
 import { FunctionComponent, useState } from "react";
-import { useLocalStorage } from "../hooks/useLocalStorage";
 import { SavedJson } from "../typings";
 import {
   Box,
@@ -11,15 +10,16 @@ import {
 } from "@mui/material";
 import Textarea from "@mui/joy/Textarea";
 import { useIndexedDBStore } from "use-indexeddb";
+import { ModalComponent } from "./Modal";
 
 type InsertJsonModalProps = {
   open: boolean;
-  handleClose: () => void;
+  onClose: () => void;
 };
 
 export const InsertJsonModal: FunctionComponent<InsertJsonModalProps> = ({
   open,
-  handleClose,
+  onClose,
 }) => {
   const { add } = useIndexedDBStore("savedJson");
   const [name, setName] = useState<string | null>(null);
@@ -33,6 +33,8 @@ export const InsertJsonModal: FunctionComponent<InsertJsonModalProps> = ({
         id: crypto.randomUUID(),
         name,
         json: parsedJson,
+        plan: null,
+        parts: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -40,22 +42,15 @@ export const InsertJsonModal: FunctionComponent<InsertJsonModalProps> = ({
       setName(null);
       setJson("");
       setErrorMessage(null);
-      handleClose();
+      onClose();
     } catch (error) {
       setErrorMessage("Invalid JSON format.");
     }
   };
 
   return (
-    <Modal
-      open={open}
-      onClose={handleClose}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
-    >
-      <Box
-        sx={{ width: 400, bgcolor: "background.paper", p: 4, borderRadius: 2 }}
-      >
+    <ModalComponent open={open} onClose={onClose}>
+      <>
         <Typography id="modal-modal-title" variant="h6" component="h2">
           Paste your JSON here
         </Typography>
@@ -97,7 +92,7 @@ export const InsertJsonModal: FunctionComponent<InsertJsonModalProps> = ({
             {errorMessage}
           </Typography>
         )}
-      </Box>
-    </Modal>
+      </>
+    </ModalComponent>
   );
 };

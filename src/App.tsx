@@ -2,11 +2,13 @@ import { Button, styled, Tab, Tabs } from "@mui/material";
 import "./App.css";
 import { InsertJsonModal } from "./modals/InsertJsonModal";
 import { useEffect, useState } from "react";
-import { useLocalStorage } from "./hooks/useLocalStorage";
 import { SavedJson } from "./typings";
-import { ContentPage } from "./content/content";
-import "react-json-view-lite/dist/index.css";
+import { EntityView } from "./entity/EntityView";
 import setupIndexedDB, { useIndexedDBStore } from "use-indexeddb";
+import { UploadLbdFileModal } from "./modals/UploadLbdFileModal";
+import { SurfacesView } from "./surfaces/SurfacesView";
+
+import "react-json-view-lite/dist/index.css";
 
 const Main = styled("main")`
   height: 100vh;
@@ -48,6 +50,8 @@ const idbConfig = {
       indices: [
         { name: "name", keyPath: "name", options: { unique: false } },
         { name: "json", keyPath: "json" },
+        { name: "plan", keyPath: "plan" },
+        { name: "parts", keyPath: "parts" },
         { name: "createdAt", keyPath: "createdAt" },
         { name: "updatedAt", keyPath: "updatedAt" },
       ],
@@ -59,9 +63,11 @@ function App() {
   const [savedJson, setSavedJson] = useState<SavedJson[]>([]);
   const { getAll } = useIndexedDBStore<SavedJson>("savedJson");
   const [jsonModalOpen, setJsonModalOpen] = useState(false);
+  const [categoryTabIndex, setCategoryTabIndex] = useState(0);
   const [savedJsonTabIndex, setSavedJsonTabIndex] = useState<number | null>(
     null
   );
+  const [uploadLbdFileModalOpen, setUploadLbdFileModalOpen] = useState(false);
 
   useEffect(() => {
     setupIndexedDB(idbConfig)
@@ -72,19 +78,34 @@ function App() {
       .catch((e) => console.error("error / unsupported", e));
   }, []);
 
+  console.log("categoryTabIndex", categoryTabIndex);
+
   return (
     <>
       <Main>
         <Sidebar>
           <h1 style={{ color: "white" }}>Entity Viewer</h1>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setJsonModalOpen(true)}
-            style={{ marginBottom: "20px" }}
-          >
-            Insert JSON
-          </Button>
+          <div style={{ display: "flex", flexDirection: "row" }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setJsonModalOpen(true)}
+              size="small"
+              style={{ marginBottom: "20px", marginRight: "10px" }}
+            >
+              Insert JSON
+            </Button>
+
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setUploadLbdFileModalOpen(true)}
+              style={{ marginBottom: "20px" }}
+              size="small"
+            >
+              Upload LBD File
+            </Button>
+          </div>
           <Tabs
             value={savedJsonTabIndex}
             variant="scrollable"
@@ -102,19 +123,45 @@ function App() {
           </Tabs>
         </Sidebar>
         <Content>
-          <ContentPage
-            json={
-              savedJsonTabIndex || savedJsonTabIndex === 0
-                ? savedJson[savedJsonTabIndex]
-                : null
-            }
-          />
+          <Tabs
+            value={categoryTabIndex}
+            onChange={(e, newValue) => setCategoryTabIndex(newValue)}
+            variant="fullWidth"
+          >
+            <SavedJsonTab label="Entities" value={0} />
+            <SavedJsonTab label="Surfaces" value={1} />
+          </Tabs>
+          {
+            [
+              <EntityView
+                json={
+                  savedJsonTabIndex || savedJsonTabIndex === 0
+                    ? savedJson[savedJsonTabIndex]
+                    : null
+                }
+              />,
+              <SurfacesView
+                savedJson={
+                  savedJsonTabIndex || savedJsonTabIndex === 0
+                    ? savedJson[savedJsonTabIndex]
+                    : null
+                }
+              />,
+            ][categoryTabIndex]
+          }
         </Content>
       </Main>
       <InsertJsonModal
         open={jsonModalOpen}
-        handleClose={() => {
+        onClose={() => {
           setJsonModalOpen(false);
+        }}
+      />
+
+      <UploadLbdFileModal
+        open={uploadLbdFileModalOpen}
+        onClose={() => {
+          setUploadLbdFileModalOpen(false);
         }}
       />
     </>

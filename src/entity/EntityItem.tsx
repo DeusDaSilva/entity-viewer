@@ -1,9 +1,18 @@
-import { styled, Table, TableBody, TableCell, TableRow } from "@mui/material";
+import {
+  Icon,
+  IconButton,
+  styled,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+} from "@mui/material";
 import { FunctionComponent } from "react";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 
 const StyledEntityItem = styled("div")`
   padding: 10px;
-  border: 1px solid white;
+  border: 1px solid #006a67;
   margin: 5px;
   margin-bottom: 12px;
   border-radius: 8px;
@@ -24,6 +33,7 @@ const StyledTable = styled(Table)`
   margin-bottom: 10px;
   color: white;
 `;
+
 const StyledTableRow = styled(TableRow)`
   display: grid;
   grid-template-columns: 1fr 3fr;
@@ -35,7 +45,16 @@ const StyledTableRow = styled(TableRow)`
 `;
 
 const StyledTableCell = styled(TableCell)`
-  color: white;
+  color: #00fff7;
+  border-color: #006a67;
+`;
+
+const StyledIconButton = styled(IconButton)`
+  color: #00fff7;
+  &:hover {
+    background-color: #021073;
+    color: white;
+  }
 `;
 
 function truncate(str: string, maxLength: number) {
@@ -77,12 +96,26 @@ export const EntityItem: FunctionComponent<EntityItemProps> = ({
         <TableBody>
           {componentKeys.map((componentKey) => {
             const value = entity.components[componentKey].value;
-
             return (
               <StyledTableRow key={componentKey}>
                 <StyledTableCell>{componentKey}</StyledTableCell>
-                <StyledTableCell>
-                  {truncate(JSON.stringify(value, null, 2), 300)}
+                <StyledTableCell
+                  style={{ display: "grid", gridTemplateColumns: "auto 50px" }}
+                >
+                  <span>{truncate(JSON.stringify(value, null, 2), 300)}</span>
+                  <StyledIconButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      let valueToCopy = value;
+                      if (typeof value === "object") {
+                        valueToCopy = JSON.stringify(value);
+                      }
+                      navigator.clipboard.writeText(valueToCopy);
+                    }}
+                    size="small"
+                  >
+                    <ContentCopyIcon sx={{ fontSize: 12 }} />
+                  </StyledIconButton>
                 </StyledTableCell>
               </StyledTableRow>
             );
